@@ -1,0 +1,612 @@
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+h1 {
+  font-size: 28px;
+  margin: 0 0 12px;
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab:hover {
+  color: #555;
+}
+
+.tab.active {
+  color: #4f46e5;
+  border-bottom-color: #4f46e5;
+}
+
+.subtitle {
+  color: #888;
+  margin-bottom: 24px;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+}
+
+.no-data {
+  padding: 12px 0;
+  color: #999;
+  font-style: italic;
+}
+
+/* Patient table */
+.patient-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.patient-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid #e0e0e0;
+  font-weight: 600;
+  color: #555;
+}
+
+.patient-row td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.patient-row.expanded {
+  background: #eef2ff;
+}
+
+.id-cell {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+}
+
+.view-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid #4f46e5;
+  background: #4f46e5;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.view-btn:hover {
+  background: #4338ca;
+}
+
+/* Workflows panel */
+.workflows-panel-row td {
+  padding: 12px 24px;
+  background: #f9fafb;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.workflow-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.workflow-table thead th {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  color: #666;
+}
+
+.workflow-row td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.workflow-row.selected {
+  background: #e0e7ff;
+}
+
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-pending { background: #f3f4f6; color: #6b7280; }
+.status-processing { background: #fef3c7; color: #d97706; }
+.status-completed { background: #d1fae5; color: #059669; }
+.status-failed { background: #fee2e2; color: #dc2626; }
+
+.failure-cell {
+  color: #dc2626;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.content-cell pre {
+  margin: 0;
+  font-size: 11px;
+  white-space: pre-wrap;
+  max-width: 300px;
+  color: #666;
+}
+
+.audit-btn {
+  padding: 3px 10px;
+  font-size: 11px;
+  border: 1px solid #6b7280;
+  background: transparent;
+  color: #6b7280;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.audit-btn:hover {
+  background: #f3f4f6;
+}
+
+.audit-btn.active {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}
+
+.workflow-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.prompt-versions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.prompt-versions-table thead th {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  color: #888;
+}
+
+.prompt-versions-table tbody td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Audit panel */
+.audit-row td {
+  padding: 8px 10px 16px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.audit-table thead th {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  color: #888;
+}
+
+.audit-table tbody td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: top;
+}
+
+.payload-cell {
+  max-width: 400px;
+}
+
+.payload-cell pre {
+  margin: 0;
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #555;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+/* Prompts */
+.agent-section {
+  margin-bottom: 24px;
+}
+
+.agent-name {
+  font-size: 16px;
+  margin: 0 0 8px;
+  color: #333;
+}
+
+.prompts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.prompts-table thead th {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  color: #666;
+}
+
+.prompt-row td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.prompt-row.selected {
+  background: #e0e7ff;
+}
+
+.type-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.type-system { background: #dbeafe; color: #1d4ed8; }
+.type-user { background: #fef3c7; color: #d97706; }
+
+.prompt-text-row td {
+  padding: 8px 10px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #ddd;
+}
+
+.prompt-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prompt-text {
+  margin: 0;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #333;
+  background: #fff;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.prompt-textarea {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  padding: 12px;
+  border: 2px solid #4f46e5;
+  border-radius: 4px;
+  resize: vertical;
+  min-height: 200px;
+  background: #fff;
+  color: #333;
+}
+
+.prompt-textarea:focus {
+  outline: none;
+  border-color: #4338ca;
+}
+
+.prompt-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn, .save-btn, .cancel-btn {
+  padding: 5px 14px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid;
+}
+
+.edit-btn {
+  background: transparent;
+  border-color: #6b7280;
+  color: #6b7280;
+}
+
+.edit-btn:hover {
+  background: #f3f4f6;
+}
+
+.save-btn {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #fff;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  background: transparent;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.cancel-btn:hover {
+  background: #f3f4f6;
+}
+
+.edit-btn.active {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}
+
+.history-panel {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.history-title {
+  font-size: 13px;
+  margin: 0 0 8px;
+  color: #555;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.history-table thead th {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  color: #888;
+}
+
+.history-row td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.history-row.selected {
+  background: #e0e7ff;
+}
+
+.history-text-row td {
+  padding: 8px;
+  background: #f9fafb;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .tabs {
+    border-bottom-color: #333;
+  }
+
+  .tab {
+    color: #777;
+  }
+
+  .tab:hover {
+    color: #bbb;
+  }
+
+  .tab.active {
+    color: #818cf8;
+    border-bottom-color: #818cf8;
+  }
+
+  .patient-table thead th,
+  .workflow-table thead th,
+  .audit-table thead th,
+  .prompts-table thead th {
+    border-bottom-color: #333;
+    color: #aaa;
+  }
+
+  .agent-name {
+    color: #e0e0e0;
+  }
+
+  .prompt-row td {
+    border-bottom-color: #2a2a3a;
+  }
+
+  .prompt-row.selected {
+    background: #252850;
+  }
+
+  .prompt-text-row td {
+    background: #1a1a2a;
+    border-bottom-color: #333;
+  }
+
+  .prompt-text {
+    color: #ccc;
+    background: #1e1e2e;
+    border-color: #333;
+  }
+
+  .type-system { background: #1e3a5f; color: #60a5fa; }
+  .type-user { background: #451a03; color: #fbbf24; }
+
+  .prompt-textarea {
+    background: #1e1e2e;
+    color: #ccc;
+    border-color: #818cf8;
+  }
+
+  .prompt-textarea:focus {
+    border-color: #a5b4fc;
+  }
+
+  .edit-btn {
+    color: #9ca3af;
+    border-color: #4b5563;
+  }
+
+  .edit-btn:hover {
+    background: #2a2a3a;
+  }
+
+  .cancel-btn {
+    color: #9ca3af;
+    border-color: #4b5563;
+  }
+
+  .cancel-btn:hover {
+    background: #2a2a3a;
+  }
+
+  .edit-btn.active {
+    background: #4f46e5;
+    color: #fff;
+    border-color: #4f46e5;
+  }
+
+  .history-panel {
+    border-top-color: #333;
+  }
+
+  .history-title {
+    color: #aaa;
+  }
+
+  .history-table thead th {
+    border-bottom-color: #333;
+    color: #999;
+  }
+
+  .history-row td {
+    border-bottom-color: #2a2a3a;
+  }
+
+  .history-row.selected {
+    background: #252850;
+  }
+
+  .history-text-row td {
+    background: #1a1a2a;
+    border-bottom-color: #333;
+  }
+
+  .patient-row td {
+    border-bottom-color: #2a2a3a;
+  }
+
+  .patient-row.expanded {
+    background: #1e2040;
+  }
+
+  .workflows-panel-row td {
+    background: #1a1a2a;
+    border-bottom-color: #333;
+  }
+
+  .workflow-row td {
+    border-bottom-color: #2a2a3a;
+  }
+
+  .workflow-row.selected {
+    background: #252850;
+  }
+
+  .audit-row td {
+    background: #1e1e2e;
+  }
+
+  .audit-table tbody td {
+    border-bottom-color: #2a2a3a;
+  }
+
+  .content-cell pre {
+    color: #aaa;
+  }
+
+  .payload-cell pre {
+    color: #ccc;
+    background: #1a1a2a;
+  }
+
+  .view-btn {
+    background: #4f46e5;
+  }
+
+  .audit-btn {
+    color: #9ca3af;
+    border-color: #4b5563;
+  }
+
+  .audit-btn:hover {
+    background: #2a2a3a;
+  }
+
+  .audit-btn.active {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: #fff;
+  }
+
+  .prompt-versions-table thead th {
+    border-bottom-color: #333;
+    color: #999;
+  }
+
+  .prompt-versions-table tbody td {
+    border-bottom-color: #2a2a3a;
+  }
+
+  .status-pending { background: #374151; color: #9ca3af; }
+  .status-processing { background: #451a03; color: #fbbf24; }
+  .status-completed { background: #064e3b; color: #34d399; }
+  .status-failed { background: #450a0a; color: #f87171; }
+}

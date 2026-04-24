@@ -1,0 +1,520 @@
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+h1 {
+  font-size: 28px;
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  color: #888;
+  margin-bottom: 24px;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+}
+
+.patient-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.patient-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid #e0e0e0;
+  font-weight: 600;
+  color: #555;
+}
+
+.patient-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.patient-row:hover {
+  background: #f5f5f5;
+}
+
+.patient-row.expanded {
+  background: #eef2ff;
+}
+
+.patient-row td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.conditions-row td {
+  padding: 0 12px 16px 32px;
+  background: #fafafa;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.conditions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.conditions-table thead th {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  color: #666;
+}
+
+.conditions-table tbody td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.no-conditions {
+  padding: 12px 0;
+  color: #999;
+  font-style: italic;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  margin: 0 0 6px;
+}
+
+.observations-title {
+  margin-top: 16px;
+}
+
+.panel-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid #6b7280;
+  background: transparent;
+  color: #6b7280;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.panel-btn:hover {
+  background: #f3f4f6;
+}
+
+.panel-btn.active {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}
+
+.workflow-cell {
+  text-align: right;
+  white-space: nowrap;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.workflow-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid #4f46e5;
+  background: #4f46e5;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.workflow-btn:hover {
+  background: #4338ca;
+}
+
+.workflow-sending {
+  font-size: 12px;
+  color: #888;
+}
+
+.workflow-submitted {
+  font-size: 12px;
+  color: #16a34a;
+}
+
+.workflow-error {
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.workflow-history-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid #6b7280;
+  background: transparent;
+  color: #6b7280;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.workflow-history-btn:hover {
+  background: #f3f4f6;
+}
+
+.workflow-history-btn.has-workflows {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.workflow-history-btn.has-workflows:hover {
+  background: #f0fdf4;
+}
+
+.workflow-panel-row td {
+  padding: 0;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.workflow-panel {
+  padding: 16px 24px;
+  background: #f9fafb;
+}
+
+.workflow-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.workflow-panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.close-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: #f3f4f6;
+}
+
+.workflows-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.workflows-table thead th {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  color: #666;
+}
+
+.workflow-history-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.workflow-history-row:hover {
+  background: #eef2ff;
+}
+
+.workflow-history-row.selected {
+  background: #e0e7ff;
+}
+
+.workflow-history-row td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.workflow-detail-row td {
+  padding: 8px 10px 16px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
+
+.workflow-detail p {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.failure-msg {
+  color: #dc2626;
+}
+
+/* Steps timeline */
+.steps-timeline {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+  padding: 6px 0;
+  padding-left: 20px;
+}
+
+.step:not(.last)::after {
+  content: '';
+  position: absolute;
+  left: 24px;
+  top: 9px;
+  width: 1px;
+  height: calc(100% + 2px);
+  background: #d1d5db;
+}
+
+.step.done:not(.last)::after {
+  background: #6b7280;
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  margin-top: 3px;
+}
+
+.step.done .step-dot {
+  background: #6b7280;
+}
+
+.step.active .step-dot {
+  background: #6b7280;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+.step-label {
+  font-size: 14px;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.step.result .step-label {
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.step.result .step-dot {
+  background: #10b981;
+  animation: none;
+}
+
+.result-pre {
+  margin: 0;
+  font-family: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+.step.result {
+}
+
+
+/* Config panel */
+.config-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+.config-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-row label {
+  font-size: 14px;
+  color: #555;
+}
+
+.config-row select {
+  padding: 4px 8px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+}
+
+.config-row input[type="checkbox"] {
+  margin-right: 4px;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.status-pending { color: #9ca3af; }
+.status-processing { color: #d97706; }
+.status-completed { color: #16a34a; font-weight: 600; }
+.status-failed { color: #dc2626; font-weight: 600; }
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.ranking-table thead th {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  color: #666;
+}
+
+.ranking-table tbody td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-link {
+  display: block;
+  font-size: 12px;
+  color: #4f46e5;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.detail-link:hover { text-decoration: underline; }
+
+.eligibility-detail-row td {
+  background: #f9fafb;
+  vertical-align: top;
+  font-size: 13px;
+}
+.criteria-pre {
+  margin: 0; font-family: inherit; font-size: 13px;
+  white-space: pre-wrap; word-break: break-word;
+  color: #f9fafb;
+}
+.elig-sub-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.elig-sub-table th { text-align: left; padding: 4px 6px; border-bottom: 1px solid #ddd; font-weight: 600; color: #666; }
+.elig-sub-table td { padding: 4px 6px; border-bottom: 1px solid #eee; vertical-align: top; }
+.elig-label { font-size: 11px; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+.elig-included { background: #d1fae5; color: #065f46; }
+.elig-not-included { background: #fee2e2; color: #991b1b; }
+.elig-excluded { background: #fee2e2; color: #991b1b; }
+.elig-not-excluded { background: #d1fae5; color: #065f46; }
+.elig-not-applicable { background: #f3f4f6; color: #6b7280; }
+.elig-not-enough-information { background: #fef3c7; color: #92400e; }
+
+@media (prefers-color-scheme: dark) {
+  .patient-table thead th {
+    border-bottom-color: #333;
+    color: #aaa;
+  }
+
+  .patient-row:hover {
+    background: #1e1e2e;
+  }
+
+  .patient-row.expanded {
+    background: #1e2040;
+  }
+
+  .patient-row td {
+    border-bottom-color: #2a2a3a;
+  }
+
+  .conditions-row td {
+    background: #1a1a2a;
+    border-bottom-color: #333;
+  }
+
+  .conditions-table thead th {
+    border-bottom-color: #333;
+    color: #999;
+  }
+
+  .conditions-table tbody td {
+    border-bottom-color: #2a2a3a;
+  }
+
+  .workflow-history-btn {
+    color: #9ca3af;
+    border-color: #4b5563;
+  }
+
+  .workflow-history-btn:hover {
+    background: #2a2a3a;
+  }
+
+  .workflow-history-btn.has-workflows {
+    border-color: #22c55e;
+    color: #22c55e;
+  }
+
+  .workflow-history-btn.has-workflows:hover {
+    background: #0a2a1a;
+  }
+
+  .workflow-panel {
+    background: #1a1a2a;
+  }
+
+  .close-btn {
+    background: #2a2a3a;
+    border-color: #4b5563;
+    color: #ccc;
+  }
+
+  .workflow-history-row:hover {
+    background: #1e2040;
+  }
+
+  .workflow-history-row.selected {
+    background: #252850;
+  }
+
+  .workflow-detail-row td {
+    background: #1e1e2e;
+  }
+
+  .workflow-panel-row td {
+    border-bottom-color: #333;
+  }
+
+  .workflows-table thead th,
+  .ranking-table thead th {
+    border-bottom-color: #333;
+    color: #999;
+  }
+
+  .workflow-history-row td,
+  .ranking-table tbody td {
+    border-bottom-color: #2a2a3a;
+  }
+}

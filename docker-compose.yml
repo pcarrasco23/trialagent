@@ -1,0 +1,146 @@
+services:
+  postgres-synthea:
+    image: postgres:16
+    container_name: postgres-synthea
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=synthea_fhir
+    volumes:
+      - postgres_synthea_data:/var/lib/postgresql/data
+
+  postgres-trial-agent:
+    image: postgres:16
+    container_name: postgres-trial-agent
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=trial_agent_admin
+    volumes:
+      - postgres_trial_agent_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  db-setup:
+    build: .
+    container_name: db-setup
+    environment:
+      - ADMIN_DB_URL=postgresql://postgres:password@postgres-trial-agent:5432/trial_agent_admin
+      - SYNTHEA_FHIR_DB_URL=postgresql://postgres:password@postgres-synthea:5432/synthea_fhir
+    command: python db/db_setup_entrypoint.py
+    depends_on:
+      - postgres-trial-agent
+      - postgres-synthea
+
+  trial-agent-api:
+    build: .
+    container_name: trial-agent-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ADMIN_DB_URL=postgresql://postgres:password@postgres-trial-agent:5432/trial_agent_admin
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis:6379
+    command: python main.py
+    depends_on:
+      db-setup:
+        condition: service_completed_successfully
+      postgres-trial-agent:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  rq-worker:
+    build: .
+    environment:
+      - ADMIN_DB_URL=postgresql://postgres:password@postgres-trial-agent:5432/trial_agent_admin
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - QDRANT_URL=http://qdrant:6333
+      - REDIS_URL=redis://redis:6379
+    command: rq worker workflows --url redis://redis:6379
+    depends_on:
+      db-setup:
+        condition: service_completed_successfully
+      postgres-trial-agent:
+        condition: service_started
+      qdrant:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  trial-agent-dashboard:
+    build:
+      context: frontend
+    container_name: trial-agent-dashboard
+    ports:
+      - "8002:8002"
+    environment:
+      - TRIAL_AGENT_API_URL=http://trial-agent-api:8000
+    depends_on:
+      - trial-agent-api
+
+  synthea:
+    build:
+      context: .
+      dockerfile: clients/synthea/Dockerfile
+    container_name: synthea
+    ports:
+      - "8001:8001"
+    environment:
+      - SYNTHEA_FHIR_DB_URL=postgresql://postgres:password@postgres-synthea:5432/synthea_fhir
+      - TRIAL_AGENT_API_URL=http://trial-agent-api:8000
+      - TOP_K_TRIALS=${TOP_K_TRIALS:-5}
+    depends_on:
+      - postgres-synthea
+      - trial-agent-api
+
+  synthea-bigquery:
+    build:
+      context: clients/synthea_bigquery
+    container_name: synthea-bigquery
+    ports:
+      - "8003:8003"
+    environment:
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_APPLICATION_CREDENTIALS=/gcp/application_default_credentials.json
+      - TRIAL_AGENT_API_URL=http://trial-agent-api:8000
+      - TOP_K_TRIALS=${TOP_K_TRIALS:-5}
+    volumes:
+      - ~/.config/gcloud/application_default_credentials.json:/gcp/application_default_credentials.json:ro
+    depends_on:
+      - trial-agent-api
+
+
+  trec:
+    build:
+      context: clients/trec
+    container_name: trec
+    ports:
+      - "8004:8004"
+    environment:
+      - TRIAL_AGENT_API_URL=http://trial-agent-api:8000
+      - TOP_K_TRIALS=${TOP_K_TRIALS:-5}
+    depends_on:
+      - trial-agent-api
+
+volumes:
+  postgres_synthea_data:
+  postgres_trial_agent_data:
+  qdrant_data:

@@ -1,0 +1,25 @@
+# Data files
+data/ctg-studies.json
+data/synthea_sample_data_fhir_latest/
+clients/trec/data/corpus.jsonl
+clients/trec/data/qrels2021.txt
+clients/trec/data/topics2021.xml
+clients/synthea/data/synthea_sample_data_fhir_latest
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
+dist/
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+
+# Environment
+.env

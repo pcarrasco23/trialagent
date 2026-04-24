@@ -1,0 +1,6 @@
+.venv
+__pycache__
+*.pyc
+.git
+.env
+data/synthea_sample_data_fhir_latest
