@@ -9,12 +9,10 @@ import os
 
 from autogen_agentchat.base import Response
 from autogen_agentchat.messages import TextMessage
-from openai import OpenAI
-
 from agents.event_bus import bus, AgentEvent
 from agents.prompt_loader import get_prompt
+from lib.llm_client import get_llm_client
 
-openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 DEFAULT_MODEL = os.environ.get("KEYWORD_MODEL", "gpt-4o")
 
 
@@ -29,12 +27,13 @@ class KeywordExtractionBusAgent:
         content = messages[0].content if messages else ""
 
         model = bus.get_workflow_param("model", DEFAULT_MODEL)
+        client, resolved_model = get_llm_client(model)
         system_prompt = get_prompt("keyword_extraction_agent", "default", "system")
         user_template = get_prompt("keyword_extraction_agent", "default", "user")
         user_prompt = user_template.format(patient_description=content)
 
-        response = openai_client.chat.completions.create(
-            model=model,
+        response = client.chat.completions.create(
+            model=resolved_model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},

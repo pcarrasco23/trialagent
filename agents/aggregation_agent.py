@@ -10,12 +10,10 @@ import os
 
 from autogen_agentchat.base import Response
 from autogen_agentchat.messages import TextMessage
-from openai import OpenAI
-
 from agents.event_bus import bus, AgentEvent
 from agents.prompt_loader import get_prompt
+from lib.llm_client import get_llm_client
 
-openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 DEFAULT_MODEL = os.environ.get("AGGREGATION_MODEL", "gpt-4o")
 
 
@@ -82,16 +80,18 @@ def build_aggregation_prompt(
 
 
 def aggregate_trial(
-    patient: str, trial_results: dict, trial_info: dict, model: str = DEFAULT_MODEL
+    patient: str, trial_results: dict, trial_info: dict, model: str = DEFAULT_MODEL, client=None, resolved_model: str = None
 ) -> tuple[dict, int]:
     """Call LLM to produce relevance and eligibility scores for a patient-trial pair.
     Returns (scores, total_tokens)."""
+    if client is None:
+        client, resolved_model = get_llm_client(model)
     system_prompt, user_prompt = build_aggregation_prompt(
         patient, trial_results, trial_info
     )
 
-    response = openai_client.chat.completions.create(
-        model=model,
+    response = client.chat.completions.create(
+        model=resolved_model or model,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -139,6 +139,7 @@ class AggregationAgent:
             )
 
         model = bus.get_workflow_param("model", DEFAULT_MODEL)
+        client, resolved_model = get_llm_client(model)
         print(f"  [{self.name}] Aggregating scores using {model}...")
         all_scores = []
         self.last_total_tokens = 0
@@ -167,7 +168,7 @@ class AggregationAgent:
             print(f"    Scoring {nct_id}: {trial_info['brief_title'][:60]}...")
 
             scores, tokens = aggregate_trial(
-                content, eligibility, trial_info, model=model
+                content, eligibility, trial_info, model=model, client=client, resolved_model=resolved_model
             )
             self.last_total_tokens += tokens
 

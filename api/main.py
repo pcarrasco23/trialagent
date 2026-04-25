@@ -21,7 +21,12 @@ from redis import Redis
 from rq import Queue
 
 from api.pg_listener import PgWorkflowListener
-from lib.workflow import create_workflow, get_workflow_status, get_ranking_results
+from lib.workflow import (
+    create_workflow,
+    get_workflow_status,
+    get_ranking_results,
+    get_qrels_results,
+)
 
 ADMIN_DB_URL = os.environ.get("ADMIN_DB_URL", "")
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
@@ -45,6 +50,7 @@ ALLOWED_MODELS = {
     "gpt-4.1",
     "gpt-4.1-mini",
     "gpt-5.1",
+    "meditron",
 }
 
 
@@ -121,7 +127,11 @@ async def ranking_results(workflow_id: str):
         status = get_workflow_status(workflow_id)
         if not status:
             raise HTTPException(status_code=404, detail="Workflow not found")
-    return results
+    qrels = get_qrels_results(workflow_id)
+    return {
+        "ranking_results": results,
+        "qrels_results": qrels,
+    }
 
 
 @app.get("/trial_agent_workflow/patient/{patient_id}/ranking_results")
@@ -144,6 +154,7 @@ def ranking_results_for_patient(patient_id: str):
     for workflow_id, model, trial_corpus in rows:
         ranking = get_ranking_results(workflow_id)
         status = get_workflow_status(workflow_id)
+        qrels = get_qrels_results(workflow_id)
         results.append(
             {
                 "workflow_id": workflow_id,
@@ -151,6 +162,7 @@ def ranking_results_for_patient(patient_id: str):
                 "trial_corpus": trial_corpus,
                 "status": status,
                 "ranking_results": ranking,
+                "qrels_results": qrels,
             }
         )
 

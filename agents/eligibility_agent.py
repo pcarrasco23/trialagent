@@ -10,15 +10,13 @@ import os
 from autogen_agentchat.base import Response
 from autogen_agentchat.messages import TextMessage
 from nltk.tokenize import sent_tokenize
-from openai import OpenAI
-
 import psycopg2
 
 from agents.event_bus import bus, AgentEvent
 from agents.prompt_loader import get_prompt
+from lib.llm_client import get_llm_client
 from lib.workflow import get_workflow_observations
 
-openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 DEFAULT_MODEL = os.environ.get("ELIGIBILITY_MODEL", "gpt-4o")
 ADMIN_DB_URL = os.environ.get("ADMIN_DB_URL", "")
 
@@ -64,9 +62,11 @@ def build_matching_prompt(trial: dict, inc_exc: str, patient: str) -> tuple[str,
     return system_prompt, user_prompt
 
 
-def evaluate_trial(trial: dict, patient_note: str, model: str = DEFAULT_MODEL) -> tuple[dict, int]:
+def evaluate_trial(trial: dict, patient_note: str, model: str = DEFAULT_MODEL, client=None, resolved_model: str = None) -> tuple[dict, int]:
     """Evaluate a single trial's inclusion and exclusion criteria against the patient.
     Returns (results, total_tokens)."""
+    if client is None:
+        client, resolved_model = get_llm_client(model)
     results = {}
     total_tokens = 0
 
@@ -78,8 +78,8 @@ def evaluate_trial(trial: dict, patient_note: str, model: str = DEFAULT_MODEL) -
 
         system_prompt, user_prompt = build_matching_prompt(trial, inc_exc, patient_note)
 
-        response = openai_client.chat.completions.create(
-            model=model,
+        response = client.chat.completions.create(
+            model=resolved_model or model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -194,6 +194,7 @@ class EligibilityAgent:
         patient_note = prepare_patient_note(full_description)
 
         model = bus.get_workflow_param("model", DEFAULT_MODEL)
+        client, resolved_model = get_llm_client(model)
         print(f"  [{self.name}] Evaluating eligibility for {len(trials)} trials using {model}...")
         all_results = []
         self.last_total_tokens = 0
@@ -202,7 +203,7 @@ class EligibilityAgent:
             nct_id = trial["nct_id"]
             print(f"    Evaluating {nct_id}: {trial.get('brief_title', '')[:60]}...")
 
-            eligibility, tokens = evaluate_trial(trial, patient_note, model=model)
+            eligibility, tokens = evaluate_trial(trial, patient_note, model=model, client=client, resolved_model=resolved_model)
             self.last_total_tokens += tokens
             summary = summarize_eligibility(eligibility)
 

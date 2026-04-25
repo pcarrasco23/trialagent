@@ -70,7 +70,7 @@ function PatientWorkflowsPanel({ patientId }) {
         if (data.status === 'completed') {
           setSteps(prev => [...prev.map(s => ({ ...s, active: false })), { message: 'Completed', active: false }])
           const rankRes = await fetch(`/api/workflows/${workflowId}/ranking_results`)
-          if (rankRes.ok) setRankings(await rankRes.json())
+          if (rankRes.ok) { const d = await rankRes.json(); setRankings(d.ranking_results || d) }
           loadWorkflows()
           ws.close()
         } else if (data.status === 'failed') {
@@ -88,7 +88,7 @@ function PatientWorkflowsPanel({ patientId }) {
         if (data.status === 'completed') {
           setSteps(prev => [...prev.map(s => ({ ...s, active: false })), { message: 'Completed', active: false }])
           const rankRes = await fetch(`/api/workflows/${workflowId}/ranking_results`)
-          if (rankRes.ok) setRankings(await rankRes.json())
+          if (rankRes.ok) { const d = await rankRes.json(); setRankings(d.ranking_results || d) }
           loadWorkflows()
           ws.close()
         } else if (data.status === 'failed') {
@@ -114,6 +114,7 @@ function PatientWorkflowsPanel({ patientId }) {
             <option value="gpt-4.1">gpt-4.1</option>
             <option value="gpt-4.1-mini">gpt-4.1-mini</option>
             <option value="gpt-5.1">gpt-5.1</option>
+            <option value="meditron">meditron</option>
           </select>
         </div>
         <div className="config-row">

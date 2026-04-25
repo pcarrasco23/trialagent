@@ -167,6 +167,27 @@ def get_workflow_status(workflow_id: str, db_url: str = ADMIN_DB_URL) -> dict | 
         return None
 
 
+def get_qrels_results(workflow_id: str, db_url: str = ADMIN_DB_URL) -> dict | None:
+    if not db_url:
+        return None
+    try:
+        conn = psycopg2.connect(db_url)
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT metric_name, metric_value FROM workflow_qrels_results WHERE workflow_id = %s",
+            (workflow_id,),
+        )
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        if not rows:
+            return None
+        return {name: value for name, value in rows}
+    except Exception as e:
+        print(f"  [workflow] Failed to get qrels results: {e}")
+        return None
+
+
 def get_ranking_results(workflow_id: str, db_url: str = ADMIN_DB_URL) -> list[dict]:
     if not db_url:
         return []

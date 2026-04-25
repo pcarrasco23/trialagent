@@ -14,6 +14,7 @@ function PatientWorkflowsPanel({ topicNumber, patientId }) {
   const [workflowId, setWorkflowId] = useState(null)
   const [steps, setSteps] = useState([])
   const [rankings, setRankings] = useState([])
+  const [qrelsResults, setQrelsResults] = useState(null)
 
   const addStep = (message, displayType = 'status') => {
     setSteps(prev => {
@@ -42,6 +43,7 @@ function PatientWorkflowsPanel({ topicNumber, patientId }) {
     setError(null)
     setSteps([])
     setRankings([])
+    setQrelsResults(null)
     setExpandedTrialId(null)
     try {
       const res = await fetch(`/api/topics/${topicNumber}/run-workflow`, {
@@ -75,7 +77,7 @@ function PatientWorkflowsPanel({ topicNumber, patientId }) {
         if (data.status === 'completed') {
           setSteps(prev => [...prev.map(s => ({ ...s, active: false })), { message: 'Completed', active: false }])
           const rankRes = await fetch(`/api/workflows/${workflowId}/ranking_results`)
-          if (rankRes.ok) setRankings(await rankRes.json())
+          if (rankRes.ok) { const d = await rankRes.json(); setRankings(d.ranking_results || d); setQrelsResults(d.qrels_results || null) }
           loadWorkflows()
           ws.close()
         } else if (data.status === 'failed') {
@@ -93,7 +95,7 @@ function PatientWorkflowsPanel({ topicNumber, patientId }) {
         if (data.status === 'completed') {
           setSteps(prev => [...prev.map(s => ({ ...s, active: false })), { message: 'Completed', active: false }])
           const rankRes = await fetch(`/api/workflows/${workflowId}/ranking_results`)
-          if (rankRes.ok) setRankings(await rankRes.json())
+          if (rankRes.ok) { const d = await rankRes.json(); setRankings(d.ranking_results || d); setQrelsResults(d.qrels_results || null) }
           loadWorkflows()
           ws.close()
         } else if (data.status === 'failed') {
@@ -119,6 +121,7 @@ function PatientWorkflowsPanel({ topicNumber, patientId }) {
             <option value="gpt-4.1">gpt-4.1</option>
             <option value="gpt-4.1-mini">gpt-4.1-mini</option>
             <option value="gpt-5.1">gpt-5.1</option>
+            <option value="meditron">meditron</option>
           </select>
         </div>
         <div className="config-row">
@@ -152,6 +155,19 @@ function PatientWorkflowsPanel({ topicNumber, patientId }) {
             </div>
           ))}
         </div>
+      )}
+
+      {qrelsResults && (
+        <table className="table table-sm table-bordered mt-2 mb-1" style={{width: 'auto'}}>
+          <thead className="table-info">
+            <tr><th>Metric</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            {Object.entries(qrelsResults).sort(([a],[b]) => a.localeCompare(b)).map(([name, value]) => (
+              <tr key={name}><td>{name}</td><td>{value.toFixed(4)}</td></tr>
+            ))}
+          </tbody>
+        </table>
       )}
 
       {rankings.length > 0 && (
@@ -232,6 +248,18 @@ function PatientWorkflowsPanel({ topicNumber, patientId }) {
                   {selectedWorkflow === w.workflow_id && (
                     <tr>
                       <td colSpan="4">
+                        {w.qrels_results && (
+                          <table className="table table-sm table-bordered mb-1" style={{width: 'auto'}}>
+                            <thead className="table-info">
+                              <tr><th>Metric</th><th>Value</th></tr>
+                            </thead>
+                            <tbody>
+                              {Object.entries(w.qrels_results).sort(([a],[b]) => a.localeCompare(b)).map(([name, value]) => (
+                                <tr key={name}><td>{name}</td><td>{value.toFixed(4)}</td></tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
                         {w.ranking_results && w.ranking_results.length > 0 ? (
                           <table className="table table-bordered mb-0">
                             <thead className="table-success">

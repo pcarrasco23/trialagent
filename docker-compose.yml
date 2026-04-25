@@ -74,6 +74,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - QDRANT_URL=http://qdrant:6333
       - REDIS_URL=redis://redis:6379
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434/v1
     command: rq worker workflows --url redis://redis:6379
     depends_on:
       db-setup:

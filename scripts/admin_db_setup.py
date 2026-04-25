@@ -139,6 +139,18 @@ CREATE TABLE IF NOT EXISTS workflow_trial_eligibility (
 
 CREATE INDEX IF NOT EXISTS idx_wte_workflow ON workflow_trial_eligibility (workflow_id);
 CREATE INDEX IF NOT EXISTS idx_wte_nct ON workflow_trial_eligibility (workflow_id, nct_id);
+
+-- QRELs evaluation results per workflow
+CREATE TABLE IF NOT EXISTS workflow_qrels_results (
+    id              SERIAL PRIMARY KEY,
+    workflow_id     UUID NOT NULL REFERENCES workflow(id),
+    metric_name     TEXT NOT NULL,
+    metric_value    DOUBLE PRECISION NOT NULL,
+    created_at      TIMESTAMP DEFAULT NOW(),
+    UNIQUE (workflow_id, metric_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_wqr_workflow ON workflow_qrels_results (workflow_id);
 """
 
 

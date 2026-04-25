@@ -4,13 +4,17 @@ against qrels (if available on the workflow) using pytrec_eval metrics.
 """
 
 import json
+import os
 
+import psycopg2
 import pytrec_eval
 from autogen_agentchat.base import Response
 from autogen_agentchat.messages import TextMessage
 
 from agents.event_bus import bus
 from lib.workflow import get_workflow_qrels
+
+ADMIN_DB_URL = os.environ.get("ADMIN_DB_URL", "")
 
 EVAL_METRICS = {"ndcg_cut_5", "ndcg_cut_10", "ndcg_cut_20", "P_10", "recip_rank"}
 
@@ -68,6 +72,25 @@ class QrelsAgent:
         print(f"  [{self.name}] Evaluation results:")
         for metric, score in sorted(metrics.items()):
             print(f"    {metric}: {score:.4f}")
+
+        # Persist metrics to database
+        if ADMIN_DB_URL and metrics:
+            try:
+                conn = psycopg2.connect(ADMIN_DB_URL)
+                cur = conn.cursor()
+                for metric_name, metric_value in metrics.items():
+                    cur.execute(
+                        """INSERT INTO workflow_qrels_results (workflow_id, metric_name, metric_value)
+                           VALUES (%s, %s, %s)
+                           ON CONFLICT (workflow_id, metric_name) DO UPDATE SET metric_value = EXCLUDED.metric_value""",
+                        (workflow_id, metric_name, float(metric_value)),
+                    )
+                conn.commit()
+                cur.close()
+                conn.close()
+                print(f"  [{self.name}] Saved {len(metrics)} metrics to database.")
+            except Exception as e:
+                print(f"  [{self.name}] Failed to save metrics: {e}")
 
         result_text = json.dumps(metrics)
 
