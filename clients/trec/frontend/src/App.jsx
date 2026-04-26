@@ -120,8 +120,11 @@ function PatientWorkflowsPanel({ topicNumber, patientId }) {
             <option value="gpt-4o-mini">gpt-4o-mini</option>
             <option value="gpt-4.1">gpt-4.1</option>
             <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-            <option value="gpt-5.1">gpt-5.1</option>
-            <option value="meditron">meditron</option>
+            <option value="gpt-5.4">gpt-5.4</option>
+            <option value="llama3.2">llama3.2</option>
+            <option value="llama3.2-finetuned">llama3.2-finetuned</option>
+            <option value="qwen-tuned">qwen-tuned</option>
+            <option value="qwen3-vl:4b">qwen3-vl:4b</option>
           </select>
         </div>
         <div className="config-row">

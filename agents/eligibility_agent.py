@@ -62,13 +62,14 @@ def build_matching_prompt(trial: dict, inc_exc: str, patient: str) -> tuple[str,
     return system_prompt, user_prompt
 
 
-def evaluate_trial(trial: dict, patient_note: str, model: str = DEFAULT_MODEL, client=None, resolved_model: str = None) -> tuple[dict, int]:
+def evaluate_trial(trial: dict, patient_note: str, model: str = DEFAULT_MODEL, client=None, resolved_model: str = None) -> tuple[dict, int, list]:
     """Evaluate a single trial's inclusion and exclusion criteria against the patient.
-    Returns (results, total_tokens)."""
+    Returns (results, total_tokens, llm_chats)."""
     if client is None:
         client, resolved_model = get_llm_client(model)
     results = {}
     total_tokens = 0
+    llm_chats = []
 
     for inc_exc in ["inclusion", "exclusion"]:
         criteria_text = trial.get(f"{inc_exc}_criteria", "")
@@ -90,15 +91,24 @@ def evaluate_trial(trial: dict, patient_note: str, model: str = DEFAULT_MODEL, c
         if response.usage:
             total_tokens += response.usage.total_tokens
 
-        message = response.choices[0].message.content.strip()
-        message = message.strip("`").strip("json")
+        raw_output = response.choices[0].message.content.strip()
+
+        llm_chats.append({
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+                {"role": "assistant", "content": raw_output},
+            ]
+        })
+
+        message = raw_output.strip("`").strip("json")
 
         try:
             results[inc_exc] = json.loads(message)
         except json.JSONDecodeError:
             results[inc_exc] = message
 
-    return results, total_tokens
+    return results, total_tokens, llm_chats
 
 
 def prepare_patient_note(patient_description: str) -> str:
@@ -203,8 +213,37 @@ class EligibilityAgent:
             nct_id = trial["nct_id"]
             print(f"    Evaluating {nct_id}: {trial.get('brief_title', '')[:60]}...")
 
-            eligibility, tokens = evaluate_trial(trial, patient_note, model=model, client=client, resolved_model=resolved_model)
+            eligibility, tokens, llm_chats = evaluate_trial(trial, patient_note, model=model, client=client, resolved_model=resolved_model)
             self.last_total_tokens += tokens
+
+            # Send per-trial progress to WebSocket clients
+            if ADMIN_DB_URL:
+                try:
+                    workflow_id = bus.current_workflow_id()
+                    trial_idx = trials.index(trial) + 1
+                    msg = f"Evaluated trial {trial_idx}/{len(trials)}: {nct_id}"
+                    conn = psycopg2.connect(ADMIN_DB_URL)
+                    cur = conn.cursor()
+                    cur.execute(
+                        "SELECT pg_notify('workflow_updates', %s)",
+                        (json.dumps({
+                            "workflow_id": workflow_id,
+                            "agent_message": msg,
+                            "display_type": "result",
+                        }),),
+                    )
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                except Exception:
+                    pass
+
+            for chat in llm_chats:
+                bus.schedule_broadcast(AgentEvent(
+                    message_type="EligibilityLlmChat",
+                    content=json.dumps(chat),
+                    workflow_id=bus.current_workflow_id(),
+                ))
             summary = summarize_eligibility(eligibility)
 
             all_results.append({

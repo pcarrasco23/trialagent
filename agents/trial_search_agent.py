@@ -48,6 +48,15 @@ class TrialSearchAgent:
         self.model.eval()
         print(f"  [{self.name}] Ready")
 
+    @staticmethod
+    def _normalize_minmax(fused_scores: dict) -> dict:
+        """Normalize fused scores to 0-100 range using min-max scaling."""
+        vals = list(fused_scores.values())
+        lo, hi = min(vals), max(vals)
+        if hi == lo:
+            return {tid: 100.0 for tid in fused_scores}
+        return {tid: 100.0 * (s - lo) / (hi - lo) for tid, s in fused_scores.items()}
+
     def _encode_query_dense(self, conditions: list[str]):
         """Encode conditions with MedCPT-Query-Encoder, return numpy array."""
         with torch.no_grad():
@@ -126,8 +135,12 @@ class TrialSearchAgent:
                         )
                         nctid2score[nct_id] = nctid2score.get(nct_id, 0) + rrf_score
 
-        # Sort by fused score
+        # Sort by fused score and take top_k
         ranked = sorted(nctid2score.items(), key=lambda x: -x[1])[:top_k]
+
+        # Normalize scores to 20-100 range based on rank
+        top_k_scores = dict(ranked)
+        normalized = self._normalize_minmax(top_k_scores)
 
         # Fetch payloads for top results
         results = []
@@ -149,7 +162,7 @@ class TrialSearchAgent:
             results.append(
                 {
                     "nct_id": nct_id,
-                    "score": round(score, 6),
+                    "score": round(normalized[nct_id], 2),
                     "brief_title": payload.get("brief_title", ""),
                     "official_title": payload.get("official_title", ""),
                     "conditions": payload.get("conditions", ""),

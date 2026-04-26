@@ -49,8 +49,11 @@ ALLOWED_MODELS = {
     "gpt-4o-mini",
     "gpt-4.1",
     "gpt-4.1-mini",
-    "gpt-5.1",
-    "meditron",
+    "gpt-5.4",
+    "llama3.2",
+    "llama3.2-finetuned",
+    "qwen-tuned",
+    "qwen3-vl:4b",
 }
 
 

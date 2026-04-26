@@ -17,6 +17,7 @@ import agents.eligibility_agent  # noqa: F401
 import agents.aggregation_agent  # noqa: F401
 import agents.ranking_agent  # noqa: F401
 import agents.qrels_agent  # noqa: F401
+import agents.tuning_dataset_agent  # noqa: F401
 
 from agents.event_bus import bus, AgentEvent
 from lib.workflow import update_workflow_status

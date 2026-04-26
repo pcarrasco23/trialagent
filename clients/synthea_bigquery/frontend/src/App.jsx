@@ -309,7 +309,7 @@ function PatientWorkflowsPanel({ patientId }) {
             <option value="gpt-4o-mini">gpt-4o-mini</option>
             <option value="gpt-4.1">gpt-4.1</option>
             <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-            <option value="gpt-5.1">gpt-5.1</option>
+            <option value="gpt-5.4">gpt-5.4</option>
             <option value="meditron">meditron</option>
           </select>
         </div>

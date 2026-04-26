@@ -1,8 +1,7 @@
 """
-Agent that subscribes to EligibilityResults events, fetches full trial details
-from the ctg_studies file, and uses an LLM to produce relevance (R) and
-eligibility (E) scores for each patient-trial pair.
-Follows the same aggregation approach as TrialGPT/run_aggregation.py.
+Agent that subscribes to EligibilityResults events and computes relevance (R)
+and eligibility (E) scores for each patient-trial pair using criterion-level
+eligibility labels. No LLM call required.
 """
 
 import json
@@ -11,103 +10,73 @@ import os
 from autogen_agentchat.base import Response
 from autogen_agentchat.messages import TextMessage
 from agents.event_bus import bus, AgentEvent
-from agents.prompt_loader import get_prompt
-from lib.llm_client import get_llm_client
 
-DEFAULT_MODEL = os.environ.get("AGGREGATION_MODEL", "gpt-4o")
+INFORMATIVE_INCLUSION = {"included", "not included"}
+INFORMATIVE_EXCLUSION = {"excluded", "not excluded"}
+NEUTRAL = {"not enough information", "not applicable"}
 
 
-def convert_criteria_pred_to_string(prediction: dict, trial_info: dict) -> str:
-    """Convert criterion-level eligibility predictions to a readable string."""
-    output = ""
+def aggregate(criteria_predictions: list[dict]) -> float:
+    """Compute eligibility score (E) from criterion-level predictions."""
+    total = len(criteria_predictions)
+    if total == 0:
+        return 0.0
 
-    for inc_exc in ["inclusion", "exclusion"]:
-        criteria_text = trial_info.get(f"{inc_exc}_criteria", "")
-        if not criteria_text:
+    informative = 0
+    contribs = []
+
+    for c in criteria_predictions:
+        label, ctype = c["label"], c["type"]
+
+        if label in NEUTRAL:
+            contribs.append(0)
             continue
 
-        idx2criterion = {}
-        idx = 0
-        for criterion in criteria_text.split("\n\n"):
-            criterion = criterion.strip()
-            if (
-                "inclusion criteria" in criterion.lower()
-                or "exclusion criteria" in criterion.lower()
-            ):
-                continue
-            if len(criterion) < 5:
-                continue
-            idx2criterion[str(idx)] = criterion
-            idx += 1
+        if ctype == "inclusion":
+            if label == "included":
+                contribs.append(+1); informative += 1
+            elif label == "not included":
+                contribs.append(-1); informative += 1
+        elif ctype == "exclusion":
+            if label == "not excluded":
+                contribs.append(+1); informative += 1
+            elif label == "excluded":
+                contribs.append(-1); informative += 1
 
-        pred_data = prediction.get(inc_exc, {})
+    R = 100.0 * informative / total
+
+    if any(c["type"] == "exclusion" and c["label"] == "excluded"
+           for c in criteria_predictions):
+        E = -R
+    else:
+        E = R * sum(contribs) / informative if informative else 0.0
+
+    return max(-R, min(R, E))
+
+
+def build_criteria_predictions(eligibility: dict) -> list[dict]:
+    """Convert eligibility dict from eligibility agent into a flat list of predictions."""
+    predictions = []
+    for elig_type in ["inclusion", "exclusion"]:
+        pred_data = eligibility.get(elig_type, {})
         if not isinstance(pred_data, dict):
             continue
-
-        for idx, (criterion_idx, preds) in enumerate(pred_data.items()):
-            if criterion_idx not in idx2criterion:
+        for criterion_idx, preds in pred_data.items():
+            if not isinstance(preds, list) or len(preds) < 3:
                 continue
-
-            criterion = idx2criterion[criterion_idx]
-
-            if not isinstance(preds, list) or len(preds) != 3:
-                continue
-
-            output += f"{inc_exc} criterion {idx}: {criterion}\n"
-            output += f"\tPatient relevance: {preds[0]}\n"
-            if len(preds[1]) > 0:
-                output += f"\tEvident sentences: {preds[1]}\n"
-            output += f"\tPatient eligibility: {preds[2]}\n"
-
-    return output
+            label = preds[2]
+            predictions.append({"label": label, "type": elig_type})
+    return predictions
 
 
-def build_aggregation_prompt(
-    patient: str, trial_results: dict, trial_info: dict
-) -> tuple[str, str]:
-    """Build system and user prompts for aggregation scoring."""
-    trial = f"Title: {trial_info['brief_title']}\n"
-    trial += f"Target conditions: {', '.join(trial_info['conditions_list'])}\n"
-    trial += f"Summary: {trial_info.get('brief_summary', '')}"
-
-    pred = convert_criteria_pred_to_string(trial_results, trial_info)
-
-    system_prompt = get_prompt("aggregation_agent", "default", "system")
-    user_template = get_prompt("aggregation_agent", "default", "user")
-    user_prompt = user_template.format(patient=patient, trial=trial, predictions=pred)
-
-    return system_prompt, user_prompt
-
-
-def aggregate_trial(
-    patient: str, trial_results: dict, trial_info: dict, model: str = DEFAULT_MODEL, client=None, resolved_model: str = None
-) -> tuple[dict, int]:
-    """Call LLM to produce relevance and eligibility scores for a patient-trial pair.
-    Returns (scores, total_tokens)."""
-    if client is None:
-        client, resolved_model = get_llm_client(model)
-    system_prompt, user_prompt = build_aggregation_prompt(
-        patient, trial_results, trial_info
-    )
-
-    response = client.chat.completions.create(
-        model=resolved_model or model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0,
-    )
-
-    total_tokens = response.usage.total_tokens if response.usage else 0
-
-    result = response.choices[0].message.content.strip()
-    result = result.strip("`").strip("json")
-
-    try:
-        return json.loads(result), total_tokens
-    except json.JSONDecodeError:
-        return {"raw_output": result}, total_tokens
+def aggregate_trial(eligibility: dict) -> tuple[dict, int]:
+    """Compute eligibility score from criterion-level predictions.
+    Returns (scores, 0) — no tokens used."""
+    predictions = build_criteria_predictions(eligibility)
+    E = aggregate(predictions)
+    return {
+        "eligibility_score_E": round(E, 2),
+    }, 0
 
 
 class AggregationAgent:
@@ -138,58 +107,35 @@ class AggregationAgent:
                 )
             )
 
-        model = bus.get_workflow_param("model", DEFAULT_MODEL)
-        client, resolved_model = get_llm_client(model)
-        print(f"  [{self.name}] Aggregating scores using {model}...")
+        print(f"  [{self.name}] Aggregating scores...")
         all_scores = []
         self.last_total_tokens = 0
 
         for result in eligibility_results:
             nct_id = result["nct_id"]
-            conditions = result.get("conditions", "")
-            trial_info = {
-                "nct_id": nct_id,
-                "brief_title": result.get("brief_title", ""),
-                "brief_summary": result.get("brief_summary", ""),
-                "inclusion_criteria": result.get("inclusion_criteria", ""),
-                "exclusion_criteria": result.get("exclusion_criteria", ""),
-                "conditions_list": (
-                    [c.strip() for c in conditions.split(",") if c.strip()]
-                    if isinstance(conditions, str)
-                    else conditions
-                ),
-            }
+            brief_title = result.get("brief_title", "")
 
             eligibility = result.get("eligibility", {})
             if not isinstance(eligibility, dict):
                 print(f"    Skipping {nct_id} — invalid eligibility data")
                 continue
 
-            print(f"    Scoring {nct_id}: {trial_info['brief_title'][:60]}...")
+            print(f"    Scoring {nct_id}: {brief_title[:60]}...")
 
-            scores, tokens = aggregate_trial(
-                content, eligibility, trial_info, model=model, client=client, resolved_model=resolved_model
-            )
+            scores, tokens = aggregate_trial(eligibility)
             self.last_total_tokens += tokens
 
             all_scores.append(
                 {
                     "nct_id": nct_id,
-                    "brief_title": trial_info["brief_title"],
-                    "relevance_score": scores.get("relevance_score_R", 0),
+                    "brief_title": brief_title,
+                    "relevance_score": result.get("retrieval_score", 0),
                     "eligibility_score": scores.get("eligibility_score_E", 0),
-                    "relevance_explanation": scores.get("relevance_explanation", ""),
-                    "eligibility_explanation": scores.get(
-                        "eligibility_explanation", ""
-                    ),
                     "matching": eligibility,
                 }
             )
 
-            print(
-                f"      -> R={scores.get('relevance_score_R', '?')} "
-                f"E={scores.get('eligibility_score_E', '?')}"
-            )
+            print(f"      -> E={scores.get('eligibility_score_E', '?')}")
 
         # Sort by eligibility score descending
         all_scores.sort(key=lambda x: x["eligibility_score"], reverse=True)

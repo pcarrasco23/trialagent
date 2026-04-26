@@ -26,6 +26,16 @@ class KeywordExtractionBusAgent:
     async def on_messages(self, messages, cancellation_token=None):
         content = messages[0].content if messages else ""
 
+        # Filter conditions to only keep those with "(disorder)"
+        filtered_lines = []
+        for line in content.split("\n"):
+            if line.startswith("- "):
+                if "(disorder)" in line.lower():
+                    filtered_lines.append(line)
+            else:
+                filtered_lines.append(line)
+        content = "\n".join(filtered_lines)
+
         model = bus.get_workflow_param("model", DEFAULT_MODEL)
         client, resolved_model = get_llm_client(model)
         system_prompt = get_prompt("keyword_extraction_agent", "default", "system")
@@ -44,6 +54,20 @@ class KeywordExtractionBusAgent:
         self.last_total_tokens = response.usage.total_tokens if response.usage else 0
         raw_output = response.choices[0].message.content.strip()
         print(f"  [keyword_extraction_agent] Raw output: {raw_output}")
+
+        # Broadcast the full LLM chat for tuning dataset collection
+        llm_chat_event = AgentEvent(
+            message_type="KeywordLlmChat",
+            content=json.dumps({
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                    {"role": "assistant", "content": raw_output},
+                ]
+            }),
+            workflow_id=bus.current_workflow_id(),
+        )
+        bus.schedule_broadcast(llm_chat_event)
 
         # Parse the JSON output
         try:

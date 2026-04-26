@@ -88,9 +88,11 @@ class EventBus:
         message = TextMessage(content=event.content, source=event.source)
 
         for agent in agents:
-            # Skip qrels_agent audit if no qrels on this workflow
+            # Skip audits for certain agents
             skip_audit = False
-            if agent.name == "qrels_agent":
+            if agent.name == "tuning_dataset_agent":
+                skip_audit = True
+            elif agent.name == "qrels_agent":
                 from lib.workflow import get_workflow_qrels
 
                 if not get_workflow_qrels(event.workflow_id):

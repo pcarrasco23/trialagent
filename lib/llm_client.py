@@ -13,7 +13,10 @@ OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1")
 
 # Map of UI model names → Ollama model tags
 OLLAMA_MODELS = {
-    "meditron": "meditron",
+    "llama3.2": "llama3.2",
+    "llama3.2-finetuned": "llama3.2-finetuned",
+    "qwen-tuned": "qwen-tuned",
+    "qwen3-vl:4b": "qwen3-vl:4b",
 }
 
 _openai_client = None

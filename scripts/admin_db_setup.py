@@ -151,6 +151,13 @@ CREATE TABLE IF NOT EXISTS workflow_qrels_results (
 );
 
 CREATE INDEX IF NOT EXISTS idx_wqr_workflow ON workflow_qrels_results (workflow_id);
+
+-- Tuning dataset for fine-tuning data collection
+CREATE TABLE IF NOT EXISTS tuning_dataset (
+    id              SERIAL PRIMARY KEY,
+    message         JSONB NOT NULL,
+    processed_at    TIMESTAMP
+);
 """
 
 
