@@ -120,3 +120,43 @@ To rebuild after code changes:
 docker compose build && docker compose up -d
 ```
 
+### 6. Fine-tuning
+
+As workflows run, the `tuning_dataset_agent` captures LLM input/output pairs (system, user, assistant messages) from the keyword extraction and eligibility agents into the `tuning_dataset` table.
+
+#### Extract training data
+
+To extract unprocessed records to a JSONL file:
+
+```bash
+python finetuning/data_extract.py
+```
+
+This writes new records to `finetuning/data/train.jsonl` in OpenAI chat format and marks them as processed. Each subsequent run only extracts records created since the last extraction, so it can be run incrementally as more workflows complete.
+
+#### Fine-tune a Qwen model
+
+1. Open `finetuning/qwen3_finetune.ipynb` and upload it to Google Colab (or run it in a Jupyter environment with GPU access).
+
+2. Upload the `finetuning/data/train.jsonl` file generated in the previous step when prompted by the notebook.
+
+3. Follow the notebook instructions to fine-tune the Qwen model on the training data.
+
+4. Once training completes, follow the notebook's export instructions to prepare the model for Ollama (GGUF conversion).
+
+5. Download the exported GGUF model file to your local machine.
+
+6. Import the model into Ollama:
+
+   ```bash
+   ollama create qwen-tuned -f finetuning/Modelfile
+   ```
+
+   The `Modelfile` should point to the downloaded GGUF file:
+
+   ```
+   FROM /path/to/downloaded/model.gguf
+   ```
+
+7. The model is now available as `qwen-tuned` in the application's model selector.
+
