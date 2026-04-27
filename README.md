@@ -1,4 +1,4 @@
-# TrialAgent
+# TrialRT
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ export TRIAL_AGENT_API_URL="http://localhost:8000"
 | `SYNTHEA_FHIR_DB_URL` | PostgreSQL URL for the patient/FHIR database |
 | `ADMIN_DB_URL` | PostgreSQL URL for the admin database (trial info, audits, prompts) |
 | `QDRANT_URL` | Qdrant vector database URL |
-| `TRIAL_AGENT_API_URL` | TrialAgent API URL for the CDC consumer (default: `http://localhost:8000`) |
+| `TRIAL_AGENT_API_URL` | Trial-RT API URL for the CDC consumer (default: `http://localhost:8000`) |
 
 ### 2. Start infrastructure
 

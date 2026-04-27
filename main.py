@@ -1,5 +1,5 @@
 """
-Entry point for the TrialAgent API server (event bus + agents).
+Entry point for the TrialRT API server (event bus + agents).
 
 Required environment variables:
     ADMIN_DB_URL   - PostgreSQL URL for the admin database (trial info, audits, prompts)

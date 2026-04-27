@@ -18,30 +18,37 @@ ADMIN_DB_URL = os.environ.get("ADMIN_DB_URL", "")
 EPS = 1e-9
 
 
-def get_matching_score(matching: dict) -> float:
+def get_matching_score(matching) -> float:
     """Compute a matching score from criterion-level eligibility predictions."""
+    if not isinstance(matching, dict):
+        return 0.0
+
     included = 0
     not_inc = 0
     no_info_inc = 0
 
     excluded = 0
 
-    for criteria, info in matching.get("inclusion", {}).items():
-        if not isinstance(info, list) or len(info) != 3:
-            continue
-        label = info[2]
-        if label == "included":
-            included += 1
-        elif label == "not included":
-            not_inc += 1
-        elif label == "not enough information":
-            no_info_inc += 1
+    inc_data = matching.get("inclusion", {})
+    if isinstance(inc_data, dict):
+        for criteria, info in inc_data.items():
+            if not isinstance(info, list) or len(info) != 3:
+                continue
+            label = info[2]
+            if label == "included":
+                included += 1
+            elif label == "not included":
+                not_inc += 1
+            elif label == "not enough information":
+                no_info_inc += 1
 
-    for criteria, info in matching.get("exclusion", {}).items():
-        if not isinstance(info, list) or len(info) != 3:
-            continue
-        if info[2] == "excluded":
-            excluded += 1
+    exc_data = matching.get("exclusion", {})
+    if isinstance(exc_data, dict):
+        for criteria, info in exc_data.items():
+            if not isinstance(info, list) or len(info) != 3:
+                continue
+            if info[2] == "excluded":
+                excluded += 1
 
     score = included / (included + not_inc + no_info_inc + EPS)
 

@@ -463,7 +463,7 @@ function App() {
 
   return (
     <div className="app">
-      <h1>TrialAgent Dashboard</h1>
+      <h1>Trial-RT Dashboard</h1>
       <div className="tabs">
         <button
           className={`tab ${activeTab === 'workflows' ? 'active' : ''}`}

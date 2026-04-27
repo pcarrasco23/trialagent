@@ -1,5 +1,5 @@
 """
-TrialAgent HTTP API.
+Trial-RT HTTP API.
 
 Accepts PatientConditions messages and queues them as workflow rows.
 A separate worker process picks up pending workflows and runs the agent pipeline.
@@ -72,7 +72,7 @@ class PatientConditionsResponse(BaseModel):
     status: str
 
 
-app = FastAPI(title="TrialAgent API", lifespan=lifespan)
+app = FastAPI(title="Trial-RT API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,5 +1,5 @@
 """
-Lightweight server for the TrialAgent Dashboard frontend.
+Lightweight server for the Trial-RT Dashboard frontend.
 Serves the built React app and proxies /api and /ws requests to the trial-agent-api.
 """
 
@@ -42,9 +42,11 @@ async def proxy_ws(websocket: WebSocket, workflow_id: str):
     await websocket.accept()
     ws_url = TRIAL_AGENT_API_URL.replace("http://", "ws://")
     async with ws_client.connect(f"{ws_url}/ws/workflow/{workflow_id}") as upstream:
+
         async def forward_to_client():
             async for message in upstream:
                 await websocket.send_text(message)
+
         async def forward_to_upstream():
             try:
                 while True:
@@ -52,9 +54,12 @@ async def proxy_ws(websocket: WebSocket, workflow_id: str):
                     await upstream.send(data)
             except WebSocketDisconnect:
                 pass
+
         _, pending = await asyncio.wait(
-            [asyncio.create_task(forward_to_client()),
-             asyncio.create_task(forward_to_upstream())],
+            [
+                asyncio.create_task(forward_to_client()),
+                asyncio.create_task(forward_to_upstream()),
+            ],
             return_when=asyncio.FIRST_COMPLETED,
         )
         for task in pending:
