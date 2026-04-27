@@ -53,18 +53,25 @@ class KeywordExtractionBusAgent:
 
         self.last_total_tokens = response.usage.total_tokens if response.usage else 0
         raw_output = response.choices[0].message.content.strip()
+
+        # Strip <think>...</think> tags (e.g. from Qwen models)
+        import re
+        raw_output = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).strip()
+
         print(f"  [keyword_extraction_agent] Raw output: {raw_output}")
 
         # Broadcast the full LLM chat for tuning dataset collection
         llm_chat_event = AgentEvent(
             message_type="KeywordLlmChat",
-            content=json.dumps({
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                    {"role": "assistant", "content": raw_output},
-                ]
-            }),
+            content=json.dumps(
+                {
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                        {"role": "assistant", "content": raw_output},
+                    ]
+                }
+            ),
             workflow_id=bus.current_workflow_id(),
         )
         bus.schedule_broadcast(llm_chat_event)
@@ -94,19 +101,23 @@ class KeywordExtractionBusAgent:
         # Broadcast keywords for the trial search agent
         keyword_event = AgentEvent(
             message_type="TrialKeywords",
-            content=json.dumps({
-                "summary": summary,
-                "conditions": conditions,
-                "patient_description": content,
-            }),
+            content=json.dumps(
+                {
+                    "summary": summary,
+                    "conditions": conditions,
+                    "patient_description": content,
+                }
+            ),
             workflow_id=bus.current_workflow_id(),
         )
         bus.schedule_broadcast(keyword_event)
 
-        output = json.dumps({
-            "summary": summary,
-            "conditions": conditions,
-        })
+        output = json.dumps(
+            {
+                "summary": summary,
+                "conditions": conditions,
+            }
+        )
 
         return Response(
             chat_message=TextMessage(

@@ -27,7 +27,10 @@ def parse_criteria(criteria: str) -> str:
     idx = 0
     for criterion in criteria.split("\n\n"):
         criterion = criterion.strip()
-        if "inclusion criteria" in criterion.lower() or "exclusion criteria" in criterion.lower():
+        if (
+            "inclusion criteria" in criterion.lower()
+            or "exclusion criteria" in criterion.lower()
+        ):
             continue
         if len(criterion) < 5:
             continue
@@ -58,11 +61,19 @@ def build_matching_prompt(trial: dict, inc_exc: str, patient: str) -> tuple[str,
     """Build system and user prompts for eligibility matching."""
     system_prompt = get_prompt("eligibility_agent", inc_exc, "system")
     user_template = get_prompt("eligibility_agent", "default", "user")
-    user_prompt = user_template.format(patient=patient, trial=format_trial(trial, inc_exc))
+    user_prompt = user_template.format(
+        patient=patient, trial=format_trial(trial, inc_exc)
+    )
     return system_prompt, user_prompt
 
 
-def evaluate_trial(trial: dict, patient_note: str, model: str = DEFAULT_MODEL, client=None, resolved_model: str = None) -> tuple[dict, int, list]:
+def evaluate_trial(
+    trial: dict,
+    patient_note: str,
+    model: str = DEFAULT_MODEL,
+    client=None,
+    resolved_model: str = None,
+) -> tuple[dict, int, list]:
     """Evaluate a single trial's inclusion and exclusion criteria against the patient.
     Returns (results, total_tokens, llm_chats)."""
     if client is None:
@@ -93,13 +104,19 @@ def evaluate_trial(trial: dict, patient_note: str, model: str = DEFAULT_MODEL, c
 
         raw_output = response.choices[0].message.content.strip()
 
-        llm_chats.append({
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-                {"role": "assistant", "content": raw_output},
-            ]
-        })
+        # Strip <think>...</think> tags (e.g. from Qwen models)
+        import re
+        raw_output = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).strip()
+
+        llm_chats.append(
+            {
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                    {"role": "assistant", "content": raw_output},
+                ]
+            }
+        )
 
         message = raw_output.strip("`").strip("json")
 
@@ -180,13 +197,17 @@ class EligibilityAgent:
         except (json.JSONDecodeError, KeyError):
             print(f"  [{self.name}] Could not parse TrialTopMatches payload")
             return Response(
-                chat_message=TextMessage(content="No trials to evaluate", source=self.name)
+                chat_message=TextMessage(
+                    content="No trials to evaluate", source=self.name
+                )
             )
 
         if not trials or not patient_description:
             print(f"  [{self.name}] Missing patient or trials, skipping.")
             return Response(
-                chat_message=TextMessage(content="No trials to evaluate", source=self.name)
+                chat_message=TextMessage(
+                    content="No trials to evaluate", source=self.name
+                )
             )
 
         # Include observations from the workflow record
@@ -196,8 +217,10 @@ class EligibilityAgent:
         if observations:
             full_description = f"{patient_description}\n\n{observations}"
             bus._log_audit(
-                workflow_id, self.name,
-                "TrialTopMatches", "observations",
+                workflow_id,
+                self.name,
+                "TrialTopMatches",
+                "observations",
                 {"observations": observations},
             )
 
@@ -205,7 +228,9 @@ class EligibilityAgent:
 
         model = bus.get_workflow_param("model", DEFAULT_MODEL)
         client, resolved_model = get_llm_client(model)
-        print(f"  [{self.name}] Evaluating eligibility for {len(trials)} trials using {model}...")
+        print(
+            f"  [{self.name}] Evaluating eligibility for {len(trials)} trials using {model}..."
+        )
         all_results = []
         self.last_total_tokens = 0
 
@@ -213,7 +238,13 @@ class EligibilityAgent:
             nct_id = trial["nct_id"]
             print(f"    Evaluating {nct_id}: {trial.get('brief_title', '')[:60]}...")
 
-            eligibility, tokens, llm_chats = evaluate_trial(trial, patient_note, model=model, client=client, resolved_model=resolved_model)
+            eligibility, tokens, llm_chats = evaluate_trial(
+                trial,
+                patient_note,
+                model=model,
+                client=client,
+                resolved_model=resolved_model,
+            )
             self.last_total_tokens += tokens
 
             # Send per-trial progress to WebSocket clients
@@ -226,11 +257,15 @@ class EligibilityAgent:
                     cur = conn.cursor()
                     cur.execute(
                         "SELECT pg_notify('workflow_updates', %s)",
-                        (json.dumps({
-                            "workflow_id": workflow_id,
-                            "agent_message": msg,
-                            "display_type": "result",
-                        }),),
+                        (
+                            json.dumps(
+                                {
+                                    "workflow_id": workflow_id,
+                                    "agent_message": msg,
+                                    "display_type": "result",
+                                }
+                            ),
+                        ),
                     )
                     conn.commit()
                     cur.close()
@@ -239,24 +274,28 @@ class EligibilityAgent:
                     pass
 
             for chat in llm_chats:
-                bus.schedule_broadcast(AgentEvent(
-                    message_type="EligibilityLlmChat",
-                    content=json.dumps(chat),
-                    workflow_id=bus.current_workflow_id(),
-                ))
+                bus.schedule_broadcast(
+                    AgentEvent(
+                        message_type="EligibilityLlmChat",
+                        content=json.dumps(chat),
+                        workflow_id=bus.current_workflow_id(),
+                    )
+                )
             summary = summarize_eligibility(eligibility)
 
-            all_results.append({
-                "nct_id": nct_id,
-                "brief_title": trial.get("brief_title", ""),
-                "brief_summary": trial.get("brief_summary", ""),
-                "conditions": trial.get("conditions", ""),
-                "inclusion_criteria": trial.get("inclusion_criteria", ""),
-                "exclusion_criteria": trial.get("exclusion_criteria", ""),
-                "retrieval_score": trial.get("score", 0),
-                "eligibility": eligibility,
-                "summary": summary,
-            })
+            all_results.append(
+                {
+                    "nct_id": nct_id,
+                    "brief_title": trial.get("brief_title", ""),
+                    "brief_summary": trial.get("brief_summary", ""),
+                    "conditions": trial.get("conditions", ""),
+                    "inclusion_criteria": trial.get("inclusion_criteria", ""),
+                    "exclusion_criteria": trial.get("exclusion_criteria", ""),
+                    "retrieval_score": trial.get("score", 0),
+                    "eligibility": eligibility,
+                    "summary": summary,
+                }
+            )
 
             print(f"      -> {summary}")
 
@@ -265,7 +304,10 @@ class EligibilityAgent:
                 try:
                     conn = psycopg2.connect(ADMIN_DB_URL)
                     cur = conn.cursor()
-                    cur.execute("SELECT 1 FROM trial_eligibility WHERE nct_id = %s LIMIT 1", (nct_id,))
+                    cur.execute(
+                        "SELECT 1 FROM trial_eligibility WHERE nct_id = %s LIMIT 1",
+                        (nct_id,),
+                    )
                     if not cur.fetchone():
                         for elig_type in ["inclusion", "exclusion"]:
                             criteria_text = trial.get(f"{elig_type}_criteria", "")
@@ -293,19 +335,32 @@ class EligibilityAgent:
                         for criterion_num, values in criteria_dict.items():
                             if not isinstance(values, list) or len(values) < 3:
                                 continue
-                            reasoning = values[0] if isinstance(values[0], str) else " ".join(str(v) for v in values[0])
+                            reasoning = (
+                                values[0]
+                                if isinstance(values[0], str)
+                                else " ".join(str(v) for v in values[0])
+                            )
                             label = values[2]
                             cur.execute(
                                 """INSERT INTO workflow_trial_eligibility
                                    (workflow_id, nct_id, eligibility_type, criterion_number, reasoning, eligibility_label)
                                    VALUES (%s, %s, %s, %s, %s, %s)""",
-                                (workflow_id, nct_id, elig_type, int(criterion_num), reasoning, label),
+                                (
+                                    workflow_id,
+                                    nct_id,
+                                    elig_type,
+                                    int(criterion_num),
+                                    reasoning,
+                                    label,
+                                ),
                             )
                     conn.commit()
                     cur.close()
                     conn.close()
                 except Exception as e:
-                    print(f"    Failed to save workflow_trial_eligibility for {nct_id}: {e}")
+                    print(
+                        f"    Failed to save workflow_trial_eligibility for {nct_id}: {e}"
+                    )
 
         print(f"\n  === Eligibility Results ({len(all_results)} trials) ===")
         for i, r in enumerate(all_results, 1):
@@ -314,15 +369,15 @@ class EligibilityAgent:
 
         result_text = json.dumps(all_results, indent=2)
 
-        bus.schedule_broadcast(AgentEvent(
-            message_type="EligibilityResults",
-            content=result_text,
-            workflow_id=bus.current_workflow_id(),
-        ))
-
-        return Response(
-            chat_message=TextMessage(content=result_text, source=self.name)
+        bus.schedule_broadcast(
+            AgentEvent(
+                message_type="EligibilityResults",
+                content=result_text,
+                workflow_id=bus.current_workflow_id(),
+            )
         )
+
+        return Response(chat_message=TextMessage(content=result_text, source=self.name))
 
 
 eligibility_agent = EligibilityAgent()
